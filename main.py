@@ -31,7 +31,7 @@ edge_colors = { # stores the color order of each edge in its solved state
     11: ("Y","O")
 }
 
-edge_positions = { # stores the side order of each edge position
+edge_positions = { # stores the side order of each edge position, the sequence must match the one given in edge_colors
     0: ("U","F"),
     1: ("U","R"),
     2: ("U","B"),
@@ -46,26 +46,26 @@ edge_positions = { # stores the side order of each edge position
     11: ("D","L")
 }
 
-corner_colors = { # stores the color order of each corner in its solved state
-    0: ("W","G","R"),
-    1: ("W","R","B"),
-    2: ("W","B","O"),
-    3: ("W","O","G"),
-    4: ("Y","R","G"),
-    5: ("Y","B","R"),
+corner_colors = { # stores the color order of each corner in its solved state, the sequence of colors must be in clockwise order from one color to the next
+    0: ("W","R","G"),
+    1: ("W","B","R"),
+    2: ("W","O","B"),
+    3: ("W","G","O"),
+    4: ("Y","G","R"),
+    5: ("Y","R","B"),
     6: ("Y","B","O"),
-    7: ("Y","G","O")
+    7: ("Y","O","G")
 }
 
-corner_positions = { # stores the side order of each corner position
-    0: ("U","F","R"),
-    1: ("U","R","B"),
-    2: ("U","B","L"),
-    3: ("U","L","F"),
+corner_positions = { # stores the side order of each corner position, the sequence must match the one given in corner_colors
+    0: ("U","R","F"),
+    1: ("U","B","R"),
+    2: ("U","L","B"),
+    3: ("U","F","L"),
     4: ("D","F","R"),
-    5: ("D","B","R"),
+    5: ("D","R","B"),
     6: ("D","B","L"),
-    7: ("D","F","L")  
+    7: ("D","L","F"),
 }
 
 sides = { # each side id and its orientation and color
@@ -108,27 +108,39 @@ class Cube:
         rotates a side of the cube.
         side chooses which side is rotated. see sides for mapping
         CCW chooses whether it should be a clockwise or counterclockwise rotation. True = CCW, False = CW
-        Each rotation does 4 basic things. first, reorient all edges. every affected edge wil be toggled between 0 and 1.
-        second, reorient all corners. CCW increases orientation from 0 to 1, 1 to 2, and 2 to 0. CW does the opposite.
-        third, reorganize the edges array. 4 edges should be moved into each others positon in a loop (edge 1 -> edge 2 -> edge 3 -> edge 4 -> edge 1; it would go in opposite order for counter clockwise)
-        fourth, reorganize the corners array, it follows a similar pattern to the edges array
         mapping of rotations for edges and corners are in edge_rots and corner_rots
+        How the function works:
+        first, goes through all edges and corners to be looped through, and gets the each piece and its orientation.
+        second, it puts each piece in its new position, and adjusts the order of the orientations to match the new positions
+        third, it goes through each piece again and adjusts its orientation as needed.
         """
-        #step 1:
+        
+        # step 1
         new_edges = []
+        edge_ori_pos = []
         for i in edge_rots[side] if CCW else reversed(edge_rots[side]):
-            self.edges[i][1] = (self.edges[i][1] + (1 if CCW else -1)) % 2
-            new_edges.append(i) # save this so we dont have to do a second loop
-        #step 2:
+            edge_ori_pos.append(edge_positions[i].index(sides[side][0]))
+            new_edges.append(i)
+        
         new_corners = []
+        corner_ori_pos = []
         for i in corner_rots[side] if CCW else reversed(corner_rots[side]):
-            self.corners[i][1] = (self.corners[i][1] + (1 if CCW else -1)) % 3
-            new_corners.append(i) # save this so we dont have to do a second loop
-        #step 3:
+            corner_ori_pos.append(corner_positions[i].index(sides[side][0]))
+            new_corners.append(i)
+
+        # step 2
+        edge_ori_pos[0], edge_ori_pos[1], edge_ori_pos[2], edge_ori_pos[3] = edge_ori_pos[1], edge_ori_pos[2], edge_ori_pos[3], edge_ori_pos[0]
         self.edges[new_edges[0]],self.edges[new_edges[1]],self.edges[new_edges[2]],self.edges[new_edges[3]] = self.edges[new_edges[1]],self.edges[new_edges[2]],self.edges[new_edges[3]],self.edges[new_edges[0]]
-        #step 4:
+        
+        corner_ori_pos[0], corner_ori_pos[1], corner_ori_pos[2], corner_ori_pos[3] = corner_ori_pos[1], corner_ori_pos[2], corner_ori_pos[3], corner_ori_pos[0]
         self.corners[new_corners[0]],self.corners[new_corners[1]],self.corners[new_corners[2]],self.corners[new_corners[3]] = self.corners[new_corners[1]],self.corners[new_corners[2]],self.corners[new_corners[3]],self.corners[new_corners[0]]
 
+        # step 3
+        for i,item in enumerate(edge_rots[side] if CCW else reversed(edge_rots[side])):
+            self.edges[item][1] = (edge_ori_pos[i] + edge_positions[item].index(sides[side][0]) + self.edges[item][1] ) % 2
+        for i,item in enumerate(corner_rots[side] if CCW else reversed(corner_rots[side])):
+            self.corners[item][1] = ( corner_ori_pos[i] - corner_positions[item].index(sides[side][0]) +  self.corners[item][1]) % 3
+    
     def visualize(self):
         """
         prints out a text visualization of the state of the cube.
@@ -182,12 +194,3 @@ class Cube:
         for i in range(3):
             print("    " + blue[i])
         print()
-
-            
-x = Cube()
-x.visualize()
-x.rotate(1,True)
-x.rotate(1,True)
-x.rotate(1,True)
-x.rotate(1,True)
-x.visualize()
