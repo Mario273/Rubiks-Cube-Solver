@@ -1,3 +1,5 @@
+import random
+
 edge_rots = { # rotation mapping of edges. the key is the side, and each edge whose positon is in the tuple moves to the next position in the tuple (last one goes to first one)
     0: (0,3,2,1),
     1: (0,4,8,7),
@@ -194,3 +196,58 @@ class Cube:
         for i in range(3):
             print("    " + blue[i])
         print()
+    def scramble(self, turns = 30):
+        """
+        scrambles the cube by making as many random turns as given in the input
+        outputs a string sequence with the scramble
+        """
+        seq = ""
+        for i in range(turns):
+            turn = random.randint(0,5)
+            drtn = bool(random.randint(0,1))
+            seq += (sides[turn][0] + ("' " if drtn else " "))
+            self.rotate(turn,drtn)
+        return '" ' + seq + '"'
+    def str_to_list(self,s):
+        """
+        takes a string with a list of turns, and outputs a list with each turns side and whether it is counter clockwise or clockwise
+        """
+        l = []
+        for i in range(len(s)):
+            for j in range(6):
+                if s[i] in sides[j]:
+                    if s[i + 1] == "'":
+                        l.append((j,True))
+                        i += 1
+                    else:
+                        l.append((j,False))
+                    break
+        return l
+    def list_to_str(self,l):
+        """
+        takes a list with a set of turns and outputs a string with each turn in proper notation
+        """
+        s = '" '
+        for i in range(len(l)):
+            s += (sides[l[i][0]][0]) + ( "' " if l[i][1] else " " )
+        s += '"'
+        return s
+    def make_moves(self, moves):
+        if type(moves) == str:
+            moves = str_to_list(moves)
+        for i in range(len(moves)):
+            rotate(moves[i][0],moves[i][1])
+            
+    def solve(self):
+        """
+        uses the beginners algorithm to solve the cube
+        """
+        turns = '" '
+        # solve the white cross
+        for i in range(4):
+
+
+c = Cube()
+c.scramble()
+c.solve()
+c.visualize()
