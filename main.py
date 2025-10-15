@@ -88,6 +88,15 @@ piece_order = { # the order each piece should be printed out for each side in th
     5: ((False,7),(True,8),(False,4),(True,11),(True,9),(False,6),(True,10),(False,5))
 }
 
+white_cross = {
+    0: {("D","F"): "F F", ("D","B"): "D D", ("D","R"): "D'", ("D","L"): "D",
+        ("F","D"): "F L D' L' F'", ("B","D"): "B R D' R' B'", ("R","D"): "R F D' F' R'", ("L","D"): "L B D' B' L'",
+        ("L", "F"): "F", ("F", "L"): "L D L'", ("R", "F"): "F'", ("F","R"): "R' D' R",
+        ("R","B"): "B' D B", ("B","R"): "R D R'", ("L", "B"): "B D B'", ("B","L"): "L' D L",
+        ("U","R"): "R R", ("U","L"): "L L", ("U","B"): "B B", 
+        ("R","U"): "R R", ("L","U"): "L L", ("B","U"): "B B", ("G","U"): "G G"}
+}
+
 class Cube:
     def __init__(self,edges=None,corners=None):
         """
@@ -234,20 +243,46 @@ class Cube:
         return s
     def make_moves(self, moves):
         if type(moves) == str:
-            moves = str_to_list(moves)
+            moves = self.str_to_list(moves)
         for i in range(len(moves)):
-            rotate(moves[i][0],moves[i][1])
+            self.rotate(moves[i][0],moves[i][1])
             
+    def getLoc(self,piece):
+        """
+        input the color code of a piece and get its location
+        """
+        if len(piece) == 3:
+            d = corner_colors
+            l = self.corners
+        else:
+            d = edge_colors
+            l = self.edges
+        key = next((k for k, v in d.items() if v == piece), None)
+        if key is None:
+            return None
+        
+        for i, sublist in enumerate(l):
+            if sublist[0] == key:
+                return i
+    
+        return None
     def solve(self):
         """
         uses the beginners algorithm to solve the cube
         """
         turns = '" '
-        # solve the white cross
-        for i in range(4):
+        while self.edges[0] != [0,0]:
+            piece = edge_positions[self.getLoc(("W","G"))]
+            ori = self.edges[0][1]
+            new_turns = white_cross[0][piece[-ori:] + piece[:-ori]]
+            print(turns)
+            self.make_moves(new_turns)
+            turns += " " + new_turns
+        return turns
+
 
 
 c = Cube()
-c.scramble()
-c.solve()
+print("Scramble:", c.scramble(10))
+#print("solve:", c.solve())
 c.visualize()
